@@ -125,6 +125,8 @@ if __name__ == "__main__":
     f = [] 
     g = []
     h = []
+    i = []
+    j = []
     start=datetime.now()
 
     #i=0
@@ -151,7 +153,9 @@ if __name__ == "__main__":
                             wvls, probs_on = calculate_spectrum(states, rates, *thz_on_state)
                             wvls, probs_off = calculate_spectrum(states, rates, *thz_off_state)
                             rdb_wavelength = abs(atom.getTransitionWavelength(n,1,j1, 6,0,1/2))
-                            ratio = max(probs_on)/probs_off[numpy.where(probs_on == max(probs_on))] 
+                            probon = max(probs_on)
+                            proboff = probs_off[numpy.where(probs_on == max(probs_on))]
+                            ratio = probon/proboff
                             radi_wvl = wvls[numpy.where(probs_on == max(probs_on))] #nm                                                        
                             print('rdb_wavelength', rdb_wavelength)
                             print(ratio)
@@ -165,18 +169,20 @@ if __name__ == "__main__":
                             f.append(thz_on_state)                          
                             g.append(dm_ryd)
                             h.append(dm_thz)
+                            i.append(probon)
+                            j.append(proboff)
                             
                             pyplot.figure()
                             pyplot.plot(wvls,probs_on, label = 'THz on')
                             pyplot.plot(wvls, probs_off, alpha = 0.75, label = 'THz off')
                             pyplot.legend(loc=0)
-                            pyplot.title('%s - %s' %(thz_off_state, thz_on_state))
+                            pyplot.title('%s - %s, %s nm.png' %(thz_off_state, thz_on_state, radi_wvl))
                             pyplot.xlabel('Fluorescence Wavelength (nm)(300000iterations)')
                             pyplot.ylabel('Prob. of emission')
-                            pyplot.savefig("C:/Users/vcpq38/OneDrive - Durham University/code/laptop/0711_Rb87mil/%s nm.png" %radi_wvl,dpi=300, bbox_inches='tight')
+                            pyplot.savefig("C:/Users/vcpq38/OneDrive - Durham University/code/laptop/0711_Rb87mil/'%s - %s, %s nm.png' %(thz_off_state, thz_on_state, radi_wvl)", dpi=300, bbox_inches='tight')
                             pyplot.show()
 
-    spectro = {'thz': list(a),'rdb_wavelength': list(b), 'ratio': list(c), 'radi_wvl':list(d), 'thz_off_state':list(e), 'thz_on_state':list(f), 'dm_ryd':list(g), 'dm_thz':list(h)}
+    spectro = {'thz': list(a),'rdb_wavelength': list(b), 'ratio': list(c), 'radi_wvl':list(d), 'thz_off_state':list(e), 'thz_on_state':list(f), 'dm_ryd':list(g), 'dm_thz':list(h),'probon':list(i), 'proboff': list(j)}
     df = DataFrame(spectro)
     export = df.to_csv('C:/Users/vcpq38/OneDrive - Durham University/code/laptop/0711_Rb87mil/Rbspectrom.csv')
     
