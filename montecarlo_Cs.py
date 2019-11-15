@@ -70,7 +70,7 @@ def get_rates_from_LUT(file):
     print (states.shape, rates.shape)
     return states, rates
     
-def calculate_spectrum(states, transitionRates, n1,l1,j1, atom_type = 'Cs', iters = 10000, 
+def calculate_spectrum(states, transitionRates, n1,l1,j1, atom_type = 'Cs', iters = 300000, 
 spectrum_range = (400,750), spectrum_resolution = 0.5):
     '''Uses a Monte-Carlo approach to simulate fluorescence from a given atomic state.
     Takes previously calculated arrays of all possible states and transition rates and a target state.
@@ -124,13 +124,15 @@ if __name__ == "__main__":
     f = [] 
     g = []
     h = []
+    i = []
+    j = []
     start=datetime.now()
 
     #i=0
     atom = Caesium()
     states, rates = get_rates_from_LUT(r'C:\Users\vcpq38\OneDrive - Durham University\code\laptop\Trans_Rates_nmax=70_temp=300K_Cs.csv')
-    for n in range(10,25,1):
-        for n1 in range(10,25,1): 
+    for n in range(10,30,1):
+        for n1 in range(10,30,1): 
             for l in range(0,3,1): 
                 for j1 in numpy.arange(1/2, 3/2+1, 1):
                     for j2 in numpy.arange(l-1/2,l+1/2+1, 1):
@@ -150,12 +152,17 @@ if __name__ == "__main__":
                             wvls, probs_on = calculate_spectrum(states, rates, *thz_on_state)
                             wvls, probs_off = calculate_spectrum(states, rates, *thz_off_state)
                             rdb_wavelength = abs(atom.getTransitionWavelength(n,1,j1, 7,0,1/2))
-                            ratio = max(probs_on)/probs_off[numpy.where(probs_on == max(probs_on))] 
+                            num1 = numpy.where(wvls == wvls[numpy.where(probs_on == max(probs_on))]-5)[0]
+                            num2 = numpy.where(wvls == wvls[numpy.where(probs_on == max(probs_on))]+5)[0]
+                            probon = sum(probs_on[int(num1):int(num2)])#max(probs_on)
+                            proboff = sum(probs_off[int(num1):int(num2)]) #probs_off[numpy.where(probs_on == max(probs_on))]
+                            ratio = probon/proboff
                             radi_wvl = wvls[numpy.where(probs_on == max(probs_on))] #nm                                                        
-                            print('rdb_wavelength', rdb_wavelength)
+                            print('rdb_wavelength', rdb_wavelength)                            
+                            print('radiate wavelength', radi_wvl)
+                            print('max_probon', probon)                            
                             print(ratio)
-                            print('radiate wavelength', radi_wvl)                            
-                
+                            
                             a.append(thz)
                             b.append(rdb_wavelength)
                             c.append(ratio)
@@ -164,20 +171,22 @@ if __name__ == "__main__":
                             f.append(thz_on_state)                          
                             g.append(dm_ryd)
                             h.append(dm_thz)
+                            i.append(probon)
+                            j.append(proboff)
                             
                             pyplot.figure()
                             pyplot.plot(wvls,probs_on, label = 'THz on')
                             pyplot.plot(wvls, probs_off, alpha = 0.75, label = 'THz off')
                             pyplot.legend(loc=0)
-                            pyplot.title('%s - %s' %(thz_off_state, thz_on_state))
-                            pyplot.xlabel('Fluorescence Wavelength (nm)(10000iterations)')
+                            pyplot.title('%s - %s_%s nm.png' %(thz_off_state, thz_on_state, radi_wvl))
+                            pyplot.xlabel('Fluorescence Wavelength (nm)(300000iterations)')
                             pyplot.ylabel('Prob. of emission')
-                            pyplot.savefig("C:/Users/vcpq38/OneDrive - Durham University/code/laptop/0711_Cs/%s nm.png" %radi_wvl,dpi=300, bbox_inches='tight')
+                            pyplot.savefig("C:/Users/vcpq38/OneDrive - Durham University/code/laptop/1211_Cs/%s - %s_%s nm.png" %(thz_off_state, thz_on_state, radi_wvl), dpi=300, bbox_inches='tight')
                             pyplot.show()
 
-    spectro = {'thz': list(a),'rdb_wavelength': list(b), 'ratio': list(c), 'radi_wvl':list(d), 'thz_off_state':list(e), 'thz_on_state':list(f), 'dm_ryd':list(g), 'dm_thz':list(h)}
+    spectro = {'thz': list(a),'rdb_wavelength': list(b), 'radi_wvl':list(d), 'thz_off_state':list(e), 'thz_on_state':list(f), 'dm_ryd':list(g), 'dm_thz':list(h), 'probon':list(i), 'proboff': list(j), 'ratio': list(c)}
     df = DataFrame(spectro)
-    export = df.to_csv('C:/Users/vcpq38/OneDrive - Durham University/code/laptop/0711_Cs/Csspectrom.csv')
+    export = df.to_csv('C:/Users/vcpq38/OneDrive - Durham University/code/laptop/1211_Cs/Csspectrom.csv')
     
     print(datetime.now()-start)
 
